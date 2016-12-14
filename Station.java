@@ -4,32 +4,31 @@ import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Random;
 
+
 public class Station {
 	private int id;
-	private Type type;
+	private Game.Type type;
 	private Shape shape;
 	private Color color;
+	
 	private ArrayList<Passenger> passengers;
-//	private ArrayList<Station> stations;
 	private ArrayList<Line> lines;
 	
-	private boolean hover = false;
-	private boolean clicked = false;
-
+	private Status status;
 	
-	public enum Type {
-		SQUARE,
-		CIRCLE,
-		TRIANGLE
+	public enum Status {
+		NORMAL,
+		HOVER,
+		CLICKED
 	}
-	
-	public Station(Type type, int limit) {
+
+	public Station(Game.Type type, int limit) {
 		this.id = Game.stations.size() - 1;
+		this.status = Status.NORMAL;
 		
 		Random rand = new Random(); 
 		
@@ -52,23 +51,14 @@ public class Station {
 		// Init
 		passengers = new ArrayList<Passenger>();
 		lines = new ArrayList<Line>();
-		passengers.add(new Passenger(Type.SQUARE));
 	}
 	
-	public boolean getHover() {
-		return hover;
+	public Status getStatus() {
+		return status;
 	}
 	
-	public void setHover(boolean hover) {
-		this.hover = hover;
-	}
-	
-	public boolean getClicked() {
-		return clicked;
-	}
-	
-	public void setClicked(boolean clicked) {
-		this.clicked = clicked;
+	public void setStatus(Status status) {
+		this.status = status;
 	}
 	
 	public Color getColor() {
@@ -87,43 +77,55 @@ public class Station {
 		return lines;
 	}
 	
+	public ArrayList<Passenger> getPassengers() {
+		return passengers;
+	}
+	
+	public Game.Type getType() {
+		return type;
+	}
+	
 	/* Paints station and its passengers */
 	public void paint(Graphics2D g) {
 		// Draw shape
-		if (clicked) {
-			g.setColor(Color.red);
-		} else if (hover) {
-			g.setColor(Color.blue);
-		} else {
-			g.setColor(Color.black);
+		switch(status) {
+			case CLICKED:
+				g.setColor(Color.red);
+				break;
+			case HOVER:
+				g.setColor(Color.blue);
+				break;
+			default:
+				g.setColor(Color.black);
+				break;
 		}
-		
+
         g.draw(getShape());
         
         // Draw passengers
-        g.setColor(Color.BLACK);
-        int xcoor = getShape().getBounds().x + 20;
-        int ycoor = getShape().getBounds().y;
-        for (Passenger p: passengers) {
-        	if (p.getType() == Type.SQUARE) {
-        		g.fill(new Rectangle2D.Double(xcoor, ycoor, 10, 10));
-        		xcoor += 20;
-        	}
-        }
+        paintPassengers(g);
+        
 	}
 	
-//	public void connectToStation(Station s) {
-//		if (s == this) {
-//			System.out.println("Can't connect to self");
-//			return;
-//		}
-//		if (stations.contains(s)) {
-//			System.out.println("Already connected to station " + s);
-//			return;
-//		}
-//		stations.add(s);
-//		System.out.println(this + " and " + s + " are connected.");
-//	}
+	/* Paints passengers around the station */
+	private void paintPassengers(Graphics2D g) {
+		g.setColor(Color.BLACK);
+        int xcoor = getShape().getBounds().x + 20;
+        int ycoor = getShape().getBounds().y;
+        
+        for (Passenger p: passengers) {
+        	switch(p.getType()) {
+        		case SQUARE:
+        			g.fill(new Rectangle2D.Double(xcoor, ycoor, 10, 10));
+        		case CIRCLE:
+        			g.fill(new Ellipse2D.Double(xcoor, ycoor, 10, 10));
+        		case TRIANGLE:
+        			g.fill(new Polygon(new int[]{xcoor, xcoor+5, xcoor+10}, 
+            				new int[]{ycoor+10, ycoor, ycoor+10}, 3));
+        	}
+        	xcoor += 12;
+        }
+	}
 	
 	public Point getCenter() {
 		return new Point((int) shape.getBounds2D().getCenterX(), (int) shape.getBounds2D().getCenterY());
@@ -134,6 +136,15 @@ public class Station {
 			System.out.println(this + " already contains " + line);
 		}
 		lines.add(line);
+	}
+	
+	public void addPassenger(Passenger p) {
+		System.out.println("Added " + p + " to " + this);
+		passengers.add(p);
+	}
+	
+	public void removePassenger(Passenger p) {
+		passengers.remove(p);
 	}
 	
 	public String toString() {

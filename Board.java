@@ -1,21 +1,15 @@
 import java.awt.BasicStroke;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
-import java.util.ArrayList;
-import java.util.Random;
 
 import javax.swing.JPanel;
 import javax.swing.event.MouseInputAdapter;
 
 public class Board extends JPanel{
 
-    private Random rand = new Random();
     public static int WIDTH = 600;
 	public static int HEIGHT = 500;
 	
@@ -23,8 +17,6 @@ public class Board extends JPanel{
 	private Line clickedLine = null;
 
     public Board() {
-
-//        addMouseMotionListener(this);
         MyListener myListener = new MyListener();
         addMouseListener(myListener);
         addMouseMotionListener(myListener);
@@ -41,7 +33,7 @@ public class Board extends JPanel{
         	line.paint(g2);
         }
         
-     // Paint stations
+        // Paint stations
         g2.setStroke(new BasicStroke(3));
         for (Station station: Game.stations) {
         	station.paint(g2);
@@ -49,6 +41,7 @@ public class Board extends JPanel{
 
         g2.dispose();
     }
+    
     
     @Override
     public Dimension getPreferredSize() {
@@ -83,7 +76,6 @@ public class Board extends JPanel{
 	
 	private void createNewLine(Station s1, Station s2) {
 		
-		
 		// Must have enough lines
 		if (Game.availableLines < 1) {
 			System.out.println("Don't have enough lines!");
@@ -93,7 +85,10 @@ public class Board extends JPanel{
 		// Create new line
 		Line newLine = new Line(s1, s2);
 		Game.lines.add(newLine);
+		Game.ends.add(newLine.getHead());
+		Game.ends.add(newLine.getTail());
 		Game.availableLines--;
+		
 		System.out.println("Created line " + newLine + " between " + s1 + " " + s2);
 	}
 	
@@ -102,20 +97,30 @@ public class Board extends JPanel{
         public void mouseMoved(MouseEvent e) {
         	for (Station station: Game.stations) {
     			boolean mouseInShape = station.getShape().contains(e.getPoint());
-    			boolean hovered = station.getHover();
+    			boolean hovered = station.getStatus() == Station.Status.HOVER;
     			
     			// If mouse enters shape 
-    			if (station.getClicked()) {
+    			if (station.getStatus() == Station.Status.CLICKED) {
     				continue;
     			}
     			if(mouseInShape && !hovered) {
-    				station.setHover(true);
+    				station.setStatus(Station.Status.HOVER);
     				repaint();
     			} else if (!mouseInShape && hovered){ // Mouse leaves shape
-    				station.setHover(false);
+    				station.setStatus(Station.Status.NORMAL);
     				repaint();
     			}
     		}
+        	
+        	for (End end: Game.ends) {
+        		
+        	}
+        }
+        
+        private void deselectCurrent() {
+        	clickedStation.setStatus(Station.Status.NORMAL);
+        	clickedStation = null;
+			clickedLine = null;
         }
         
         public void mouseClicked(MouseEvent e) {
@@ -125,24 +130,22 @@ public class Board extends JPanel{
     		// New station selected
     		if (s2 != null) {
     			System.out.println("Clicked " + s2);
-    			s2.setClicked(true);
+    			s2.setStatus(Station.Status.CLICKED);
     			
     			if (clickedStation == null) { // First click of a station 
     				clickedStation = s2;
     				clickedLine = getClickedLine(e, s2);
     			}
-    			else if (clickedStation == s2) { // Deselect
-    				clickedStation = null;
-    				clickedLine = null;
-					s2.setClicked(false);
+    			else if (clickedStation == s2) {
+    				deselectCurrent();
     			} else { 
     				if (clickedLine == null) { // Finishing a new line connection
     					createNewLine(clickedStation, s2);
     				} else { // Appending to existing line connection
     					addToLine(clickedLine, clickedStation, s2);
     				}
-    				s2.setClicked(false);
-    				clickedStation.setClicked(false);
+    				s2.setStatus(Station.Status.NORMAL);
+    				clickedStation.setStatus(Station.Status.NORMAL);
     				clickedStation = null;
     			}
     			
@@ -152,17 +155,11 @@ public class Board extends JPanel{
     		
     		// No station selected
     		if (clickedStation != null) {
-        		clickedStation.setClicked(false);
-        		clickedStation.setHover(false);
-        		clickedStation = null;
+        		deselectCurrent();
         		repaint();
     		}
     		
         }
-	
-		
-        
-
     }
 
 }
