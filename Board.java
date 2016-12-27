@@ -4,6 +4,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Path2D;
 
 import javax.swing.JPanel;
 import javax.swing.event.MouseInputAdapter;
@@ -15,6 +16,7 @@ public class Board extends JPanel{
 	
 	private Station clickedStation = null;
 	private Line clickedLine = null;
+	private Line draggingLine = null;
 
     public Board() {
         MyListener myListener = new MyListener();
@@ -92,6 +94,18 @@ public class Board extends JPanel{
 		System.out.println("Created line " + newLine + " between " + s1 + " " + s2);
 	}
 	
+    /* 
+     * @return Line that has been clicked, or null if no line was clicked
+     */
+//    private Line getDragLine(MouseEvent e) {
+//    	for (Line line: Game.lines) {
+//    		if (line.getPath().getBounds().contains(e.getPoint())) {
+//    			return line;
+//    		}
+//    	}
+//    	return null;
+//    }
+	
 	private class MyListener extends MouseInputAdapter {
 
         public void mouseMoved(MouseEvent e) {
@@ -112,9 +126,16 @@ public class Board extends JPanel{
     			}
     		}
         	
-        	for (End end: Game.ends) {
-        		
-        	}
+        	// Check if line is hovered over
+//        	for (Line line: Game.lines) {
+//        		boolean pathHovered = line.getPath().contains(e.getPoint());
+//        		if (pathHovered) {
+//        			line.setStatus(Line.Status.HOVER);
+//        			break;
+//        		} else {
+//        			line.setStatus(Line.Status.NORMAL);
+//        		}
+//        	}
         }
         
         private void deselectCurrent() {
@@ -122,6 +143,15 @@ public class Board extends JPanel{
         	clickedStation = null;
 			clickedLine = null;
         }
+        
+        public void mouseDragged(MouseEvent e) {
+        	
+        	// If there is a line currently being dragged
+        	if (draggingLine != null) {
+        		
+        	}
+        }
+
         
         public void mouseClicked(MouseEvent e) {
 
@@ -159,6 +189,11 @@ public class Board extends JPanel{
         		repaint();
     		}
     		
+//    		Line draggingLine = getDragLine(e);
+//    		
+//    		if (draggingLine == null) {
+//    			draggingLine = null;
+//    		}
         }
     }
 

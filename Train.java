@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
-public class Train {
+public class Train extends Thread {
 	private int id;
 	private Line line;
 	private ArrayList<Passenger> passengers;
@@ -46,6 +46,8 @@ public class Train {
 		this.y = currentStation.getCenter().y;
 		setNextStation(line.getStations().get(1));
 		status = Status.MOVING;
+		
+		this.start();
 	}
 	
 	public enum Status {
@@ -204,7 +206,6 @@ public class Train {
 	}
 	
 	public void run() {
-		
 		// Kill time
 		if (waits > 0) {
 			waits--;
@@ -221,6 +222,9 @@ public class Train {
 			case UNLOADING:
 				handleUnloading();
 				break;
+		default:
+			System.out.println("defaulted");
+			break;
 		}
 	
 	}
