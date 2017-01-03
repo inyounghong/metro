@@ -4,7 +4,9 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
 
 import javax.swing.JPanel;
 import javax.swing.event.MouseInputAdapter;
@@ -13,10 +15,12 @@ public class Board extends JPanel{
 
     public static int WIDTH = 600;
 	public static int HEIGHT = 500;
+	private static int CLICK_BOX_WIDTH = 6;
 	
-	private Station clickedStation = null;
-	private Line clickedLine = null;
-	private Line draggingLine = null;
+	private Station clickedStation 			= null;
+	private Line clickedLine			 	= null;
+	private ConnectingLine draggingLine 	= null;
+	private Rectangle2D clickBox	 		= null;
 
     public Board() {
         MyListener myListener = new MyListener();
@@ -97,14 +101,71 @@ public class Board extends JPanel{
     /* 
      * @return Line that has been clicked, or null if no line was clicked
      */
-//    private Line getDragLine(MouseEvent e) {
-//    	for (Line line: Game.lines) {
-//    		if (line.getPath().getBounds().contains(e.getPoint())) {
-//    			return line;
-//    		}
-//    	}
-//    	return null;
-//    }
+    private ConnectingLine getDragLine(MouseEvent e) {
+    	for (Line line: Game.lines) {
+    		for (ConnectingLine l : line.getLines()) {
+    			if (l.getLine().intersects(clickBox)) {
+        			return l;
+        		}
+    		}
+    		
+    	}
+    	return null;
+    }
+    
+    /*
+     * @return Rectangle2D square of width CLICK_BOX_WIDTH around the click event
+     */
+    private Rectangle2D makeClickBox(MouseEvent e) {
+    	double x = e.getX() - CLICK_BOX_WIDTH/2;
+    	double y = e.getY() - CLICK_BOX_WIDTH/2;
+    	return new Rectangle2D.Double(x,y, CLICK_BOX_WIDTH, CLICK_BOX_WIDTH);
+    }
+    
+    private void deselectCurrent() {
+    	clickedStation.setStatus(Station.Status.NORMAL);
+    	clickedStation = null;
+		clickedLine = null;
+    }
+    
+    /*
+     * Handles clicking a station
+     */
+    private void handleClickedStation(MouseEvent e, Station s) {
+    	System.out.println("Clicked " + s);
+		s.setStatus(Station.Status.CLICKED);
+		
+		if (clickedStation == null) { // First click of a station 
+			clickedStation = s;
+			clickedLine = getClickedLine(e, s);
+		}
+		else if (clickedStation == s) {
+			deselectCurrent();
+		} else { 
+			if (clickedLine == null) { // Finishing a new line connection
+				createNewLine(clickedStation, s);
+			} else { // Appending to existing line connection
+				addToLine(clickedLine, clickedStation, s);
+			}
+			s.setStatus(Station.Status.NORMAL);
+			clickedStation.setStatus(Station.Status.NORMAL);
+			clickedStation = null;
+		}
+		
+		repaint();
+    }
+    
+    /*
+     * @return Station that got dragged over by line
+     */
+    private Station getDraggedStation(MouseEvent e) {
+    	for (Station s : Game.stations) {
+			if (s.getBox().contains(e.getPoint())) {
+				return s;
+			}
+		}
+    	return null;
+    }
 	
 	private class MyListener extends MouseInputAdapter {
 
@@ -138,62 +199,49 @@ public class Board extends JPanel{
 //        	}
         }
         
-        private void deselectCurrent() {
-        	clickedStation.setStatus(Station.Status.NORMAL);
-        	clickedStation = null;
-			clickedLine = null;
-        }
+        
         
         public void mouseDragged(MouseEvent e) {
         	
         	// If there is a line currently being dragged
         	if (draggingLine != null) {
+        		draggingLine.addPoint(e.getPoint());
         		
+        		// Check if dragged line intersects a station's bounding box
+        		Station s = getDraggedStation(e);
+        		if (s != null) {
+        			draggingLine.insertStation(s);
+        			draggingLine = null;
+        		}
         	}
         }
-
+        
+        public void mouseReleased(MouseEvent e) {
+        	
+        	// If there had been a line getting dragged that was just released
+        	if (draggingLine != null) {
+        		draggingLine.removePoint();
+        	}
+        }
         
         public void mouseClicked(MouseEvent e) {
+        	
+        	// Make the mouse click bounding box
+        	clickBox = makeClickBox(e);
 
     		Station s2 = getClickedStation(e);
-    		
     		// New station selected
     		if (s2 != null) {
-    			System.out.println("Clicked " + s2);
-    			s2.setStatus(Station.Status.CLICKED);
-    			
-    			if (clickedStation == null) { // First click of a station 
-    				clickedStation = s2;
-    				clickedLine = getClickedLine(e, s2);
-    			}
-    			else if (clickedStation == s2) {
-    				deselectCurrent();
-    			} else { 
-    				if (clickedLine == null) { // Finishing a new line connection
-    					createNewLine(clickedStation, s2);
-    				} else { // Appending to existing line connection
-    					addToLine(clickedLine, clickedStation, s2);
-    				}
-    				s2.setStatus(Station.Status.NORMAL);
-    				clickedStation.setStatus(Station.Status.NORMAL);
-    				clickedStation = null;
-    			}
-    			
-    			repaint();
+    			handleClickedStation(e, s2);
     			return;
     		}
     		
     		// No station selected
     		if (clickedStation != null) {
         		deselectCurrent();
-        		repaint();
     		}
     		
-//    		Line draggingLine = getDragLine(e);
-//    		
-//    		if (draggingLine == null) {
-//    			draggingLine = null;
-//    		}
+    		draggingLine = getDragLine(e);
         }
     }
 

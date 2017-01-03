@@ -4,6 +4,7 @@ import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Random;
@@ -14,6 +15,9 @@ public class Station {
 	private Game.Type type;
 	private Shape shape;
 	private Color color;
+	
+	private final int STATION_SIZE = 15;
+	private final int BOX_SIZE = 20;
 	
 	private ArrayList<Passenger> passengers;
 	private ArrayList<Line> lines;
@@ -38,13 +42,13 @@ public class Station {
 		this.type = type;
 		switch(type) {
 			case SQUARE:
-				shape = new Rectangle2D.Double(x, y, 15, 15);
+				shape = new Rectangle2D.Double(x, y, STATION_SIZE, STATION_SIZE);
 				break;
 			case CIRCLE:
-				shape = new Ellipse2D.Double(x, y, 15, 15);
+				shape = new Ellipse2D.Double(x, y, STATION_SIZE, STATION_SIZE);
 				break;
 			case TRIANGLE:
-				shape = new Polygon(new int[]{x, x+8, x+16}, new int[]{y+15, y, y+15}, 3);
+				shape = new Polygon(new int[]{x, x+8, x+16}, new int[]{y+STATION_SIZE, y, y+STATION_SIZE}, 3);
 				break;
 		}
 		
@@ -73,6 +77,10 @@ public class Station {
 		return shape;
 	}
 	
+	public Point2D getPoint() {
+		return new Point2D.Double(getCenter().getX(), getCenter().getY());
+	}
+	
 	public ArrayList<Line> getLines() {
 		return lines;
 	}
@@ -83,6 +91,16 @@ public class Station {
 	
 	public Game.Type getType() {
 		return type;
+	}
+	
+	/*
+	 * Gets a station's large bounding box
+	 * @return Rectangle2D bounding box of extra BOX_SIZE
+	 */
+	public Rectangle2D getBox() {
+		double x = getCenter().getX() - BOX_SIZE/2;
+		double y = getCenter().getY() - BOX_SIZE/2;
+		return new Rectangle2D.Double(x, y, BOX_SIZE, BOX_SIZE);
 	}
 	
 	/* Paints station and its passengers */
@@ -139,7 +157,6 @@ public class Station {
 	}
 	
 	public void addPassenger(Passenger p) {
-		System.out.println("Added " + p + " to " + this);
 		passengers.add(p);
 	}
 	

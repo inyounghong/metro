@@ -19,7 +19,7 @@ public class Line {
 	private int id;
 	private Color color;
 //	private Path2D path;
-	private ArrayList<Line2D> lines;
+	private ArrayList<ConnectingLine> lines;
 	private ArrayList<Point> pathPoints;
 
 	private LinkedList<Station> stations 	= new LinkedList<Station>();
@@ -52,7 +52,6 @@ public class Line {
 		
 		// Init path
 		setNewPath();
-//		calculatePathPoints();
 	}
 	
 	/*
@@ -94,7 +93,7 @@ public class Line {
 		this.status = status;
 	}
 	
-	public ArrayList<Line2D> getLines() {
+	public ArrayList<ConnectingLine> getLines() {
 		return lines;
 	}
 	
@@ -152,21 +151,41 @@ public class Line {
 	}
 	
 	/*
+	 * @return index of the given ConnectingLine in lines ArrayList, or -1 if not found
+	 */
+	public int getIndex(ConnectingLine cl) {
+		for (int i = 0; i < lines.size(); i++) {
+			if (lines.get(i).getStations()[0] == cl.getStations()[0]) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+	/*
+	 * Inserts cl2 after cl1 in the lines ArrayList
+	 */
+	public void insertConnectingLine(ConnectingLine cl1, ConnectingLine cl2) {
+		int i = getIndex(cl1);
+		lines.add(i+1, cl2);
+		printLines();
+		stations.add(i+1, cl1.getStations()[1]);
+	}
+	
+	
+	/*
 	 * Sets lines as an array of the current stations
 	 */
 	private void setNewPath() {
-		lines = new ArrayList<Line2D>();
+		lines = new ArrayList<ConnectingLine>();
 		
 		Iterator<Station> iter = stations.iterator();
 		Station s1 = iter.next();
-		Point2D start = new Point2D.Double(s1.getCenter().getX(), s1.getCenter().getY());
 		
 		while (iter.hasNext()) {
-			Station s = iter.next();
-			Point2D next = new Point2D.Double(s.getCenter().getX(), s.getCenter().getY());
-			lines.add(new Line2D.Double(start, next));
-			System.out.println(start + " " + next);
-			start = next;
+			Station s2 = iter.next();
+			lines.add(new ConnectingLine(this, s1, s2));
+			s1 = s2;
 		}
 		System.out.println("new path set");
 	}
@@ -180,14 +199,12 @@ public class Line {
 	 * Paint line
 	 */
 	public void paint(Graphics2D g) {
+		// Don't paint if no stations
 		if (stations.size() < 2) {
 			return;
 		}
 		
 		// Paint line
-		
-		
-	
 		paintLines(g);
 		
 		// Paint trains
@@ -210,8 +227,8 @@ public class Line {
 //			case CLICKED:
 //				break;
 //		}
-		for (Line2D line : lines) {
-			g.draw(line);
+		for (ConnectingLine line : lines) {
+			line.paint(g);
 		}
 		// Paint ends
 		head.paint(g);
@@ -220,6 +237,12 @@ public class Line {
 	
 	public String toString() {
 		return "LINE " + this.id;
+	}
+	
+	public void printLines() {
+		for (ConnectingLine cl : lines) {
+			System.out.println(cl);
+		}
 	}
 	
 }

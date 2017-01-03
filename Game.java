@@ -63,6 +63,9 @@ public class Game extends JPanel{
         });
 	}
 	
+	/*
+	 * Create stations
+	 */
 	public void initStations() {
 		stations = new ArrayList<Station>();
 		addStation(Type.SQUARE);
@@ -72,7 +75,9 @@ public class Game extends JPanel{
 		addStation(Type.TRIANGLE);
 	}
 	
-	/* Adds a new station of type to the game */
+	/* 
+	 * Adds a new station of type to the game 
+	 */
 	private void addStation(Type type) {
 		stations.add(new Station(type, limit));
 		
@@ -105,6 +110,10 @@ public class Game extends JPanel{
 		executor.scheduleAtFixedRate(moveTrains, 0, 50, TimeUnit.MILLISECONDS);
 	}
 	
+	
+	/*
+	 * Randomly adds passengers to the game
+	 */
 	private static void addPassengers() {
 		Station s = getRandomStation();
 		Passenger p = getRandomPassenger(s.getType());
@@ -131,7 +140,9 @@ public class Game extends JPanel{
 		return stations.get(stationIndex);
 	}
 	
-	/* Returns a passenger of random type, that is NOT the given type */
+	/* 
+	 * @returns a passenger of random type, that is NOT the given type 
+	 */
 	private static Passenger getRandomPassenger(Type type) {
 		Type[] types = new Type[typeMap.size()];
 		typeMap.keySet().toArray(types);
@@ -139,8 +150,9 @@ public class Game extends JPanel{
 		Type t = types[typeIndex];
 		
 		if (t == type) {
-			t = types[(typeIndex + 1) % types.length];
+			t = types[(typeIndex + 1) % (types.length - 1)];
 		}
+		
 		return new Passenger(t);
 	}
 	
